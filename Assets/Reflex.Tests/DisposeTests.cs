@@ -46,7 +46,7 @@ namespace Reflex.Tests
         {
             var service = new Service();
             var container = new ContainerDescriptor("")
-                .AddInstance(service, typeof(Service))
+                .AddSingleton(service, typeof(Service))
                 .Build();
             
             container.Dispose();
