@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Reflex.Sample/Reflex.Sample.unity
     guid: f80437131882cdd4e9340aa7044d8c91
+  - enabled: 1
+    path: Assets/Greet.unity
+    guid: c95bfabbe0edd1046a2734b6e750a989
   m_configObjects: {}
