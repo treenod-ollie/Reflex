@@ -31,6 +31,7 @@ Reflex is an [Dependency Injection](https://stackify.com/dependency-injection/) 
 - [Scopes](#-scopes)
 - [Bindings](#-bindings)
 - [Resolving](#-resolving)
+- [Decorating](#-decorating)
 - [Callbacks](#-callbacks)
 - [Debugger](#-debugger)
 - [Settings](#-settings)
@@ -252,6 +253,15 @@ If object implements `IDisposable` it will be disposed when its parent Container
 Theres no need to pass `IDisposable` as contract to have your object disposed, howerver, if you want to retrieve all `IDisposable` by any API `Single<TContract>`, `Resolve<TContract>` or `All<TContract>` then yes, you have to specify it.
 > Note that `IStartable` also works for **Transients** but pay attention that any resolve API will create a new instance
 
+### AddTransient (From Value)
+```csharp
+ContainerDescriptor::AddTransient(object instance, params Type[] contracts)
+```
+Adds an object already contructed by the user to the container as a transient.
+Its gonna be returned only on first time it gets resolved, second time an exception will be throw.
+If object implements `IDisposable` it will be disposed when its parent Container are disposed.
+Theres no need to pass `IDisposable` as contract to have your object disposed, howerver, if you want to retrieve all `IDisposable` by any API `Single<TContract>`, `Resolve<TContract>` or `All<TContract>` then yes, you have to specify it.
+
 ### AddTransient (From Factory)
 ```csharp
 ContainerDescriptor::AddTransient(Func<Container, T> factory, params Type[] contracts)
@@ -323,6 +333,65 @@ private void Documentation_Bindings()
 	Debug.Log(string.Join(", ", container.All<int>())); // Prints: 1, 2, 3
 }
 ```
+
+## 🪆 Decorating
+Reflex supports decorator pattern through de `ContainerDescriptor` API `AddDecorator`, heres an usage example:
+
+```csharp
+public interface INumber
+{
+    int Get();
+}
+```
+
+```csharp
+public class Number : INumber
+{
+    private int _value;
+    public int Get() => _value;
+
+    public static Number FromValue(int value)
+    {
+        return new Number
+        {
+            _value = value
+        };
+    }
+}
+```
+
+```csharp
+public class DoubledNumber : INumber
+{
+    private readonly INumber _number;
+    public DoubledNumber(INumber number) => _number = number;
+    public int Get() => _number.Get() * 2;
+}
+```
+
+```csharp
+public class HalvedNumber : INumber
+{
+    private readonly INumber _number;
+    public HalvedNumber(INumber number) => _number = number;
+    public int Get() => _number.Get() / 2;
+}
+```
+
+```csharp
+var container = new ContainerDescriptor("")
+    .AddSingleton(Number.FromValue(10), contracts: typeof(INumber))
+    .AddDecorator(typeof(DoubledNumber), typeof(INumber))
+    .AddDecorator(typeof(HalvedNumber), typeof(INumber))
+    .AddDecorator(typeof(DoubledNumber), typeof(INumber))
+    .Build();
+
+    var number = container.Single<INumber>();
+    number.Get().Should().Be(20);
+```
+> An decorated singleton will respect singleton lifetime, returning always the same instance
+  
+> An decorated transient will respect transient lifetime, returning always a new instance
 
 ---
 
